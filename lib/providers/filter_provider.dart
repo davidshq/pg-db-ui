@@ -171,10 +171,11 @@ class FilterProvider extends ChangeNotifier {
       return;
     }
 
+    // Atomic check-and-set to prevent race conditions
     if (_isLoading) return;
+    _isLoading = true;
 
     try {
-      _isLoading = true;
       _error = null;
       
       if (refresh) {
@@ -203,12 +204,12 @@ class FilterProvider extends ChangeNotifier {
       _hasMore = newBooks.length == Constants.defaultPageSize;
       _currentPage++;
 
-      _isLoading = false;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to apply filters: $e';
-      _isLoading = false;
       notifyListeners();
+    } finally {
+      _isLoading = false;
     }
   }
 

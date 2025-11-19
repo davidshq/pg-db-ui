@@ -76,10 +76,11 @@ class SearchProvider extends ChangeNotifier {
       return;
     }
 
+    // Atomic check-and-set to prevent race conditions
     if (_isSearching) return;
+    _isSearching = true;
 
     try {
-      _isSearching = true;
       _error = null;
       
       if (refresh) {
@@ -110,12 +111,12 @@ class SearchProvider extends ChangeNotifier {
         _totalCount = await db.countSearchResults(query);
       }
 
-      _isSearching = false;
       notifyListeners();
     } catch (e) {
       _error = 'Search failed: $e';
-      _isSearching = false;
       notifyListeners();
+    } finally {
+      _isSearching = false;
     }
   }
 

@@ -59,10 +59,11 @@ class BookProvider extends ChangeNotifier {
       return;
     }
 
+    // Atomic check-and-set to prevent race conditions
     if (_isLoading) return;
+    _isLoading = true;
 
     try {
-      _isLoading = true;
       _error = null;
       
       if (refresh) {
@@ -97,15 +98,15 @@ class BookProvider extends ChangeNotifier {
         if (_disposed) return;
       }
 
-      _isLoading = false;
       _safeNotifyListeners();
     } catch (e) {
       // Check if disposed before updating state
       if (_disposed) return;
       
       _error = 'Failed to load books: $e';
-      _isLoading = false;
       _safeNotifyListeners();
+    } finally {
+      _isLoading = false;
     }
   }
 
