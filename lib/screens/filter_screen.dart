@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/filter_provider.dart';
-import '../models/author.dart';
-import '../models/subject.dart';
-import '../models/bookshelf.dart';
 
 /// Screen for managing filters
 class FilterScreen extends StatefulWidget {
@@ -157,25 +154,27 @@ class _FilterSection extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           constraints: const BoxConstraints(maxHeight: 200),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final isSelected = selectedId == item.id;
-
-              return RadioListTile<dynamic>(
-                title: Text(item.name),
-                value: item.id,
-                groupValue: selectedId,
-                onChanged: (value) {
-                  if (value != null) {
-                    onSelected(value);
-                  }
-                },
-                selected: isSelected,
-              );
+          child: RadioGroup<dynamic>(
+            groupValue: selectedId,
+            onChanged: (value) {
+              if (value != null) {
+                onSelected(value);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final isSelected = selectedId == item.id;
+
+                return RadioListTile<dynamic>(
+                  title: Text(item.name),
+                  value: item.id,
+                  selected: isSelected,
+                );
+              },
+            ),
           ),
         ),
       ],

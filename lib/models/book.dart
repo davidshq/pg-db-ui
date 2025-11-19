@@ -80,7 +80,7 @@ class Book {
   }
 
   /// Get display title (fallback to Gutenberg ID if title is null)
-  String get displayTitle => title ?? 'Untitled (${gutenbergId})';
+  String get displayTitle => title ?? 'Untitled ($gutenbergId)';
 
   /// Get authors display string
   String get authorsDisplay {

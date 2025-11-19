@@ -8,7 +8,7 @@ import '../utils/constants.dart';
 
 /// Provider for managing filter state and filtered book results
 class FilterProvider extends ChangeNotifier {
-  final DatabaseService? _databaseService;
+  DatabaseService? _databaseService;
   
   int? _selectedAuthorId;
   int? _selectedSubjectId;
@@ -62,7 +62,8 @@ class FilterProvider extends ChangeNotifier {
 
   /// Load filter options (authors, subjects, bookshelves, languages)
   Future<void> loadFilterOptions() async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       return;
     }
 
@@ -71,9 +72,9 @@ class FilterProvider extends ChangeNotifier {
     try {
       // Load authors, subjects, bookshelves in parallel
       final results = await Future.wait([
-        _databaseService!.getAllAuthors(limit: 1000),
-        _databaseService!.getAllSubjects(limit: 1000),
-        _databaseService!.getAllBookshelves(limit: 1000),
+        db.getAllAuthors(limit: 1000),
+        db.getAllSubjects(limit: 1000),
+        db.getAllBookshelves(limit: 1000),
       ]);
 
       _authors = results[0] as List<Author>;
@@ -132,7 +133,8 @@ class FilterProvider extends ChangeNotifier {
 
   /// Apply filters and load filtered books
   Future<void> applyFilters({bool refresh = false}) async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
       notifyListeners();
       return;
@@ -161,7 +163,7 @@ class FilterProvider extends ChangeNotifier {
 
       notifyListeners();
 
-      final newBooks = await _databaseService!.getBooksWithFilters(
+      final newBooks = await db.getBooksWithFilters(
         authorId: _selectedAuthorId,
         subjectId: _selectedSubjectId,
         bookshelfId: _selectedBookshelfId,

@@ -122,14 +122,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             Text(
               'Gutenberg ID: ${_book!.gutenbergId}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
             ),
             const SizedBox(height: 24),
 
             // Authors
             if (_book!.authors.isNotEmpty) ...[
-              _SectionTitle('Authors'),
+              const _SectionTitle('Authors'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -145,7 +145,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             ],
 
             // Metadata
-            _SectionTitle('Information'),
+            const _SectionTitle('Information'),
             const SizedBox(height: 8),
             _InfoRow('Language', _book!.language?.toUpperCase() ?? 'Unknown'),
             _InfoRow('Downloads', _book!.formattedDownloadCount),
@@ -158,7 +158,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Description
             if (_book!.description != null) ...[
-              _SectionTitle('Description'),
+              const _SectionTitle('Description'),
               const SizedBox(height: 8),
               Text(
                 _book!.description!,
@@ -169,7 +169,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Summary
             if (_book!.summary != null) ...[
-              _SectionTitle('Summary'),
+              const _SectionTitle('Summary'),
               const SizedBox(height: 8),
               Text(
                 _book!.summary!,
@@ -180,7 +180,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Subjects
             if (_book!.subjects.isNotEmpty) ...[
-              _SectionTitle('Subjects'),
+              const _SectionTitle('Subjects'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -196,7 +196,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Bookshelves
             if (_book!.bookshelves.isNotEmpty) ...[
-              _SectionTitle('Bookshelves'),
+              const _SectionTitle('Bookshelves'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -213,7 +213,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Formats
             if (_book!.formats.isNotEmpty) ...[
-              _SectionTitle('Available Formats'),
+              const _SectionTitle('Available Formats'),
               const SizedBox(height: 8),
               ..._book!.formats.map((format) {
                 return _FormatCard(format: format);
@@ -223,7 +223,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Production Notes
             if (_book!.productionNotes != null) ...[
-              _SectionTitle('Production Notes'),
+              const _SectionTitle('Production Notes'),
               const SizedBox(height: 8),
               Text(
                 _book!.productionNotes!,
@@ -234,7 +234,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
             // Reading Ease Score
             if (_book!.readingEaseScore != null) ...[
-              _SectionTitle('Reading Ease Score'),
+              const _SectionTitle('Reading Ease Score'),
               const SizedBox(height: 8),
               Text(
                 _book!.readingEaseScore!,

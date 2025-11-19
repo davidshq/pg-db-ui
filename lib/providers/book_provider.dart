@@ -26,7 +26,8 @@ class BookProvider extends ChangeNotifier {
 
   /// Initialize and load first page of books
   Future<void> initialize() async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
       notifyListeners();
       return;
@@ -37,7 +38,8 @@ class BookProvider extends ChangeNotifier {
 
   /// Load books (first page or refresh)
   Future<void> loadBooks({bool refresh = false}) async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
       notifyListeners();
       return;
@@ -57,7 +59,7 @@ class BookProvider extends ChangeNotifier {
 
       notifyListeners();
 
-      final newBooks = await _databaseService!.getBooks(
+      final newBooks = await db.getBooks(
         limit: Constants.defaultPageSize,
         offset: _currentPage * Constants.defaultPageSize,
       );
@@ -73,7 +75,7 @@ class BookProvider extends ChangeNotifier {
       
       // Get total count if first load
       if (_currentPage == 1) {
-        _totalCount = await _databaseService!.countBooks();
+        _totalCount = await db.countBooks();
       }
 
       _isLoading = false;
@@ -98,12 +100,13 @@ class BookProvider extends ChangeNotifier {
 
   /// Get book by ID
   Future<Book?> getBookById(int id) async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       return null;
     }
 
     try {
-      return await _databaseService!.getBookById(id);
+      return await db.getBookById(id);
     } catch (e) {
       debugPrint('Error getting book by ID: $e');
       return null;

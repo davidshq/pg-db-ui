@@ -6,7 +6,7 @@ import '../utils/constants.dart';
 
 /// Provider for managing search state and results
 class SearchProvider extends ChangeNotifier {
-  final DatabaseService? _databaseService;
+  DatabaseService? _databaseService;
   
   String _query = '';
   List<Book> _results = [];
@@ -60,7 +60,8 @@ class SearchProvider extends ChangeNotifier {
 
   /// Perform search
   Future<void> search(String query, {bool refresh = false}) async {
-    if (_databaseService == null || !_databaseService!.isInitialized) {
+    final db = _databaseService;
+    if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
       notifyListeners();
       return;
@@ -89,7 +90,7 @@ class SearchProvider extends ChangeNotifier {
 
       notifyListeners();
 
-      final newResults = await _databaseService!.searchBooks(
+      final newResults = await db.searchBooks(
         query: query,
         limit: Constants.defaultPageSize,
         offset: _currentPage * Constants.defaultPageSize,
@@ -106,7 +107,7 @@ class SearchProvider extends ChangeNotifier {
       
       // Get total count if first search
       if (_currentPage == 1) {
-        _totalCount = await _databaseService!.countSearchResults(query);
+        _totalCount = await db.countSearchResults(query);
       }
 
       _isSearching = false;

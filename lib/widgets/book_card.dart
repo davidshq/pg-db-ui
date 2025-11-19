@@ -79,7 +79,7 @@ class BookCard extends StatelessWidget {
                   Text(
                     'ID: ${book.gutenbergId}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -128,12 +128,12 @@ class _MetadataChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+        Icon(icon, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
         const SizedBox(width: 4),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
