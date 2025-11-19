@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import '../models/book.dart';
 import '../models/author.dart';
 import '../models/subject.dart';
@@ -21,6 +22,7 @@ class FilterProvider extends ChangeNotifier {
   int _currentPage = 0;
   bool _hasMore = true;
   int _totalCount = 0;
+  Timer? _debounceTimer;
 
   // Available filter options
   List<Author> _authors = [];
@@ -97,7 +99,7 @@ class FilterProvider extends ChangeNotifier {
     _filteredBooks = [];
     _hasMore = true;
     notifyListeners();
-    applyFilters();
+    _debouncedApplyFilters();
   }
 
   /// Set subject filter
@@ -107,7 +109,7 @@ class FilterProvider extends ChangeNotifier {
     _filteredBooks = [];
     _hasMore = true;
     notifyListeners();
-    applyFilters();
+    _debouncedApplyFilters();
   }
 
   /// Set bookshelf filter
@@ -117,7 +119,7 @@ class FilterProvider extends ChangeNotifier {
     _filteredBooks = [];
     _hasMore = true;
     notifyListeners();
-    applyFilters();
+    _debouncedApplyFilters();
   }
 
   /// Set language filter
@@ -127,7 +129,28 @@ class FilterProvider extends ChangeNotifier {
     _filteredBooks = [];
     _hasMore = true;
     notifyListeners();
-    applyFilters();
+    _debouncedApplyFilters();
+  }
+
+  /// Debounced filter application to avoid multiple queries when filters change rapidly
+  void _debouncedApplyFilters() {
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // If no active filters, clear immediately
+    if (!hasActiveFilters) {
+      _filteredBooks = [];
+      _currentPage = 0;
+      _hasMore = true;
+      _totalCount = 0;
+      notifyListeners();
+      return;
+    }
+
+    // Debounce filter application
+    _debounceTimer = Timer(Constants.searchDebounceDuration, () {
+      applyFilters();
+    });
   }
 
   /// Apply filters and load filtered books
@@ -197,6 +220,7 @@ class FilterProvider extends ChangeNotifier {
 
   /// Clear all filters
   void clearFilters() {
+    _debounceTimer?.cancel();
     _selectedAuthorId = null;
     _selectedSubjectId = null;
     _selectedBookshelfId = null;
@@ -213,6 +237,12 @@ class FilterProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 }
 
