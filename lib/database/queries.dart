@@ -130,6 +130,51 @@ class Queries {
     ORDER BY format_type
   ''';
 
+  // Batch loading queries for multiple books
+  static String getAuthorsForBooks(List<int> bookIds) {
+    final placeholders = bookIds.map((_) => '?').join(',');
+    return '''
+      SELECT a.id, a.name, a.first_name, a.last_name, a.agent_id, 
+             a.alias, a.webpage, a.birth_year, a.death_year, ba.book_id
+      FROM authors a
+      INNER JOIN book_authors ba ON a.id = ba.author_id
+      WHERE ba.book_id IN ($placeholders)
+      ORDER BY ba.book_id, a.name
+    ''';
+  }
+
+  static String getSubjectsForBooks(List<int> bookIds) {
+    final placeholders = bookIds.map((_) => '?').join(',');
+    return '''
+      SELECT s.id, s.subject, bs.book_id
+      FROM subjects s
+      INNER JOIN book_subjects bs ON s.id = bs.subject_id
+      WHERE bs.book_id IN ($placeholders)
+      ORDER BY bs.book_id, s.subject
+    ''';
+  }
+
+  static String getBookshelvesForBooks(List<int> bookIds) {
+    final placeholders = bookIds.map((_) => '?').join(',');
+    return '''
+      SELECT bsh.id, bsh.bookshelf, bbs.book_id
+      FROM bookshelves bsh
+      INNER JOIN book_bookshelves bbs ON bsh.id = bbs.bookshelf_id
+      WHERE bbs.book_id IN ($placeholders)
+      ORDER BY bbs.book_id, bsh.bookshelf
+    ''';
+  }
+
+  static String getFormatsForBooks(List<int> bookIds) {
+    final placeholders = bookIds.map((_) => '?').join(',');
+    return '''
+      SELECT id, book_id, format_type, file_url, file_size
+      FROM formats
+      WHERE book_id IN ($placeholders)
+      ORDER BY book_id, format_type
+    ''';
+  }
+
   // Count queries
   static const String countBooks = 'SELECT COUNT(*) FROM books';
   
@@ -157,6 +202,14 @@ class Queries {
       b.description LIKE ? OR
       a.name LIKE ? OR
       s.subject LIKE ?
+  ''';
+
+  // Languages
+  static const String getAllLanguages = '''
+    SELECT DISTINCT language
+    FROM books
+    WHERE language IS NOT NULL AND language != ''
+    ORDER BY language
   ''';
 }
 

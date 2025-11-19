@@ -13,8 +13,22 @@ class BookProvider extends ChangeNotifier {
   int _currentPage = 0;
   bool _hasMore = true;
   int _totalCount = 0;
+  bool _disposed = false;
 
   BookProvider(this._databaseService);
+  
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+  
+  /// Safely notify listeners only if not disposed
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
 
   List<Book> get books => _books;
   bool get isLoading => _isLoading;
@@ -29,7 +43,7 @@ class BookProvider extends ChangeNotifier {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
-      notifyListeners();
+      _safeNotifyListeners();
       return;
     }
 
@@ -41,7 +55,7 @@ class BookProvider extends ChangeNotifier {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
       _error = 'Database not initialized';
-      notifyListeners();
+      _safeNotifyListeners();
       return;
     }
 
@@ -57,12 +71,15 @@ class BookProvider extends ChangeNotifier {
         _hasMore = true;
       }
 
-      notifyListeners();
+      _safeNotifyListeners();
 
       final newBooks = await db.getBooks(
         limit: Constants.defaultPageSize,
         offset: _currentPage * Constants.defaultPageSize,
       );
+
+      // Check if disposed after async operation
+      if (_disposed) return;
 
       if (refresh) {
         _books = newBooks;
@@ -76,14 +93,19 @@ class BookProvider extends ChangeNotifier {
       // Get total count if first load
       if (_currentPage == 1) {
         _totalCount = await db.countBooks();
+        // Check again after async operation
+        if (_disposed) return;
       }
 
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     } catch (e) {
+      // Check if disposed before updating state
+      if (_disposed) return;
+      
       _error = 'Failed to load books: $e';
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -116,7 +138,7 @@ class BookProvider extends ChangeNotifier {
   /// Clear error
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Reset provider state
@@ -127,7 +149,7 @@ class BookProvider extends ChangeNotifier {
     _error = null;
     _isLoading = false;
     _totalCount = 0;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 }
 

@@ -70,19 +70,18 @@ class FilterProvider extends ChangeNotifier {
     if (_optionsLoaded) return;
 
     try {
-      // Load authors, subjects, bookshelves in parallel
+      // Load authors, subjects, bookshelves, and languages in parallel
       final results = await Future.wait([
         db.getAllAuthors(limit: 1000),
         db.getAllSubjects(limit: 1000),
         db.getAllBookshelves(limit: 1000),
+        db.getAllLanguages(),
       ]);
 
       _authors = results[0] as List<Author>;
       _subjects = results[1] as List<Subject>;
       _bookshelves = results[2] as List<Bookshelf>;
-
-      // Extract unique languages from books (simplified - would need a query in real app)
-      _languages = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ja', 'ar'];
+      _languages = results[3] as List<String>;
       
       _optionsLoaded = true;
       notifyListeners();

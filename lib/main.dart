@@ -1,12 +1,24 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'screens/book_list_screen.dart';
 import 'providers/book_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/filter_provider.dart';
 import 'database/database_service.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter bindings are initialized first
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize FFI for desktop platforms before running the app
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Initialize FFI - this will try to use system SQLite or bundled DLL
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  
   runApp(const MyApp());
 }
 

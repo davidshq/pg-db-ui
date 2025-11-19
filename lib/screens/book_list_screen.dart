@@ -58,7 +58,11 @@ class _BookListScreenState extends State<BookListScreen> {
     // Load initial data
     if (mounted) {
       await context.read<BookProvider>().initialize();
+      if (!mounted) return;
+      
       await filterProvider.loadFilterOptions();
+      if (!mounted) return;
+      
       setState(() {
         _isInitialized = true;
       });
@@ -86,6 +90,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Handle scroll for pagination
   void _onScroll() {
+    if (!mounted) return;
+    
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.8) {
       final searchProvider = context.read<SearchProvider>();
@@ -104,6 +110,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Get current book list based on active mode
   List<Book> _getCurrentBooks() {
+    if (!mounted) return [];
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -119,6 +127,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Check if currently loading
   bool _isLoading() {
+    if (!mounted) return false;
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -134,6 +144,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Check if has more to load
   bool _hasMore() {
+    if (!mounted) return false;
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -149,6 +161,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Check if empty
   bool _isEmpty() {
+    if (!mounted) return true;
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -164,6 +178,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Get error message
   String? _getError() {
+    if (!mounted) return null;
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -179,6 +195,8 @@ class _BookListScreenState extends State<BookListScreen> {
 
   /// Refresh data
   Future<void> _refresh() async {
+    if (!mounted) return;
+    
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
     final bookProvider = context.read<BookProvider>();
@@ -190,6 +208,8 @@ class _BookListScreenState extends State<BookListScreen> {
     } else {
       await bookProvider.refresh();
     }
+    
+    if (!mounted) return;
   }
 
   @override

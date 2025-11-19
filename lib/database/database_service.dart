@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/book.dart';
 import '../models/author.dart';
 import '../models/subject.dart';
@@ -15,6 +17,7 @@ class DatabaseService extends ChangeNotifier {
   String? _databasePath;
   bool _isInitialized = false;
   String? _error;
+  static bool _ffiInitialized = false;
 
   bool get isInitialized => _isInitialized;
   String? get error => _error;
@@ -92,15 +95,10 @@ class DatabaseService extends ChangeNotifier {
         [limit, offset],
       );
 
-      final books = <Book>[];
-      for (final map in maps) {
-        final book = Book.fromMap(map);
-        // Load related data
-        final fullBook = await _loadBookRelations(book);
-        books.add(fullBook);
-      }
-
-      return books;
+      final books = maps.map((map) => Book.fromMap(map)).toList();
+      
+      // Batch load all relations at once (optimized to avoid N+1 queries)
+      return await _loadBooksRelations(books);
     } catch (e) {
       debugPrint('Error getting books: $e');
       return [];
@@ -122,14 +120,10 @@ class DatabaseService extends ChangeNotifier {
         [searchPattern, searchPattern, searchPattern, searchPattern, limit, offset],
       );
 
-      final books = <Book>[];
-      for (final map in maps) {
-        final book = Book.fromMap(map);
-        final fullBook = await _loadBookRelations(book);
-        books.add(fullBook);
-      }
-
-      return books;
+      final books = maps.map((map) => Book.fromMap(map)).toList();
+      
+      // Batch load all relations at once (optimized to avoid N+1 queries)
+      return await _loadBooksRelations(books);
     } catch (e) {
       debugPrint('Error searching books: $e');
       return [];
@@ -177,14 +171,10 @@ class DatabaseService extends ChangeNotifier {
 
       final List<Map<String, dynamic>> maps = await _database!.rawQuery(query, args);
 
-      final books = <Book>[];
-      for (final map in maps) {
-        final book = Book.fromMap(map);
-        final fullBook = await _loadBookRelations(book);
-        books.add(fullBook);
-      }
-
-      return books;
+      final books = maps.map((map) => Book.fromMap(map)).toList();
+      
+      // Batch load all relations at once (optimized to avoid N+1 queries)
+      return await _loadBooksRelations(books);
     } catch (e) {
       debugPrint('Error getting filtered books: $e');
       return [];
@@ -289,6 +279,80 @@ class DatabaseService extends ChangeNotifier {
     }
   }
 
+  /// Batch load related data for multiple books (optimized to avoid N+1 queries)
+  Future<List<Book>> _loadBooksRelations(List<Book> books) async {
+    if (_database == null || books.isEmpty) return books;
+
+    try {
+      final bookIds = books.map((b) => b.id).toList();
+      if (bookIds.isEmpty) return books;
+
+      // Load all relations in parallel using batch queries
+      final results = await Future.wait([
+        _database!.rawQuery(Queries.getAuthorsForBooks(bookIds), bookIds),
+        _database!.rawQuery(Queries.getSubjectsForBooks(bookIds), bookIds),
+        _database!.rawQuery(Queries.getBookshelvesForBooks(bookIds), bookIds),
+        _database!.rawQuery(Queries.getFormatsForBooks(bookIds), bookIds),
+      ]);
+
+      final authorMaps = results[0] as List<Map<String, dynamic>>;
+      final subjectMaps = results[1] as List<Map<String, dynamic>>;
+      final bookshelfMaps = results[2] as List<Map<String, dynamic>>;
+      final formatMaps = results[3] as List<Map<String, dynamic>>;
+
+      // Group relations by book_id
+      final authorsByBookId = <int, List<Author>>{};
+      for (final map in authorMaps) {
+        final bookId = map['book_id'] as int;
+        authorsByBookId.putIfAbsent(bookId, () => []).add(Author.fromMap(map));
+      }
+
+      final subjectsByBookId = <int, List<String>>{};
+      for (final map in subjectMaps) {
+        final bookId = map['book_id'] as int;
+        subjectsByBookId.putIfAbsent(bookId, () => []).add(Subject.fromMap(map).subject);
+      }
+
+      final bookshelvesByBookId = <int, List<String>>{};
+      for (final map in bookshelfMaps) {
+        final bookId = map['book_id'] as int;
+        bookshelvesByBookId.putIfAbsent(bookId, () => []).add(Bookshelf.fromMap(map).bookshelf);
+      }
+
+      final formatsByBookId = <int, List<Format>>{};
+      for (final map in formatMaps) {
+        final bookId = map['book_id'] as int;
+        formatsByBookId.putIfAbsent(bookId, () => []).add(Format.fromMap(map));
+      }
+
+      // Create books with relations
+      return books.map((book) {
+        return Book(
+          id: book.id,
+          gutenbergId: book.gutenbergId,
+          title: book.title,
+          language: book.language,
+          publisher: book.publisher,
+          license: book.license,
+          rights: book.rights,
+          issuedDate: book.issuedDate,
+          downloadCount: book.downloadCount,
+          description: book.description,
+          summary: book.summary,
+          productionNotes: book.productionNotes,
+          readingEaseScore: book.readingEaseScore,
+          authors: authorsByBookId[book.id] ?? [],
+          subjects: subjectsByBookId[book.id] ?? [],
+          bookshelves: bookshelvesByBookId[book.id] ?? [],
+          formats: formatsByBookId[book.id] ?? [],
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error batch loading book relations: $e');
+      return books;
+    }
+  }
+
   /// Get all authors
   Future<List<Author>> getAllAuthors({int limit = 100, int offset = 0}) async {
     if (_database == null) return [];
@@ -367,6 +431,26 @@ class DatabaseService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error counting search results: $e');
       return 0;
+    }
+  }
+
+  /// Get all distinct languages from books
+  Future<List<String>> getAllLanguages() async {
+    if (_database == null) return [];
+
+    try {
+      final List<Map<String, dynamic>> maps = await _database!.rawQuery(
+        Queries.getAllLanguages,
+      );
+
+      return maps
+          .map((map) => map['language'] as String?)
+          .where((lang) => lang != null && lang.isNotEmpty)
+          .cast<String>()
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting languages: $e');
+      return [];
     }
   }
 }
