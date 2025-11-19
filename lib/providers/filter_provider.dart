@@ -6,6 +6,7 @@ import '../models/subject.dart';
 import '../models/bookshelf.dart';
 import '../database/database_service.dart';
 import '../utils/constants.dart';
+import '../utils/error_messages.dart';
 
 /// Provider for managing filter state and filtered book results
 class FilterProvider extends ChangeNotifier {
@@ -88,7 +89,7 @@ class FilterProvider extends ChangeNotifier {
       _optionsLoaded = true;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading filter options: $e');
+      debugPrint(ErrorMessages.forLogging('Error loading filter options', e));
     }
   }
 
@@ -157,7 +158,7 @@ class FilterProvider extends ChangeNotifier {
   Future<void> applyFilters({bool refresh = false}) async {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
-      _error = 'Database not initialized';
+      _error = ErrorMessages.databaseNotInitialized;
       notifyListeners();
       return;
     }
@@ -206,7 +207,8 @@ class FilterProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _error = 'Failed to apply filters: $e';
+      _error = ErrorMessages.failedToApplyFilters;
+      debugPrint(ErrorMessages.forLogging(ErrorMessages.failedToApplyFilters, e));
       notifyListeners();
     } finally {
       _isLoading = false;

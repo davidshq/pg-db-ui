@@ -3,6 +3,7 @@ import 'dart:async';
 import '../models/book.dart';
 import '../database/database_service.dart';
 import '../utils/constants.dart';
+import '../utils/error_messages.dart';
 
 /// Provider for managing search state and results
 class SearchProvider extends ChangeNotifier {
@@ -62,7 +63,7 @@ class SearchProvider extends ChangeNotifier {
   Future<void> search(String query, {bool refresh = false}) async {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
-      _error = 'Database not initialized';
+      _error = ErrorMessages.databaseNotInitialized;
       notifyListeners();
       return;
     }
@@ -113,7 +114,8 @@ class SearchProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _error = 'Search failed: $e';
+      _error = ErrorMessages.searchFailed;
+      debugPrint(ErrorMessages.forLogging(ErrorMessages.searchFailed, e));
       notifyListeners();
     } finally {
       _isSearching = false;

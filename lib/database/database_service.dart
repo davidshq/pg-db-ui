@@ -9,6 +9,7 @@ import '../models/subject.dart';
 import '../models/bookshelf.dart';
 import '../models/format.dart';
 import '../utils/database_helper.dart';
+import '../utils/error_messages.dart';
 import 'queries.dart';
 
 /// Database service for managing SQLite database connections and queries
@@ -36,7 +37,7 @@ class DatabaseService extends ChangeNotifier {
       }
 
       if (_databasePath == null || !DatabaseHelper.databaseExists(_databasePath!)) {
-        _error = 'Database file not found. Please select pg.db file.';
+        _error = ErrorMessages.databaseFileNotFound;
         notifyListeners();
         return false;
       }
@@ -52,7 +53,8 @@ class DatabaseService extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = 'Failed to initialize database: $e';
+      _error = ErrorMessages.format(ErrorMessages.databaseInitializationFailed, details: e, includeDetails: false);
+      debugPrint(ErrorMessages.forLogging(ErrorMessages.databaseInitializationFailed, e));
       _isInitialized = false;
       notifyListeners();
       return false;
@@ -62,7 +64,7 @@ class DatabaseService extends ChangeNotifier {
   /// Set database path manually
   Future<bool> setDatabasePath(String dbPath) async {
     if (!DatabaseHelper.databaseExists(dbPath)) {
-      _error = 'Database file does not exist at: $dbPath';
+      _error = ErrorMessages.databaseFileDoesNotExist;
       notifyListeners();
       return false;
     }

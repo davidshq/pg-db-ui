@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/book.dart';
 import '../database/database_service.dart';
 import '../utils/constants.dart';
+import '../utils/error_messages.dart';
 
 /// Provider for managing book data and state
 class BookProvider extends ChangeNotifier {
@@ -42,7 +43,7 @@ class BookProvider extends ChangeNotifier {
   Future<void> initialize() async {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
-      _error = 'Database not initialized';
+      _error = ErrorMessages.databaseNotInitialized;
       _safeNotifyListeners();
       return;
     }
@@ -54,7 +55,7 @@ class BookProvider extends ChangeNotifier {
   Future<void> loadBooks({bool refresh = false}) async {
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
-      _error = 'Database not initialized';
+      _error = ErrorMessages.databaseNotInitialized;
       _safeNotifyListeners();
       return;
     }
@@ -103,7 +104,8 @@ class BookProvider extends ChangeNotifier {
       // Check if disposed before updating state
       if (_disposed) return;
       
-      _error = 'Failed to load books: $e';
+      _error = ErrorMessages.failedToLoadBooks;
+      debugPrint(ErrorMessages.forLogging(ErrorMessages.failedToLoadBooks, e));
       _safeNotifyListeners();
     } finally {
       _isLoading = false;
@@ -131,7 +133,7 @@ class BookProvider extends ChangeNotifier {
     try {
       return await db.getBookById(id);
     } catch (e) {
-      debugPrint('Error getting book by ID: $e');
+      debugPrint(ErrorMessages.forLogging(ErrorMessages.failedToGetBook, e));
       return null;
     }
   }

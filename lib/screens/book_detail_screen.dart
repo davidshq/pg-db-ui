@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../models/book.dart';
 import '../database/database_service.dart';
 import '../models/format.dart';
+import '../utils/error_messages.dart';
 
 /// Screen for displaying detailed book information
 class BookDetailScreen extends StatefulWidget {
@@ -34,7 +36,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       final databaseService = context.read<DatabaseService>();
       if (!databaseService.isInitialized) {
         setState(() {
-          _error = 'Database not initialized';
+          _error = ErrorMessages.databaseNotInitialized;
           _isLoading = false;
         });
         return;
@@ -45,12 +47,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         _book = book;
         _isLoading = false;
         if (book == null) {
-          _error = 'Book not found';
+          _error = ErrorMessages.bookNotFound;
         }
       });
     } catch (e) {
       setState(() {
-        _error = 'Failed to load book: $e';
+        _error = ErrorMessages.failedToLoadBook;
+        debugPrint(ErrorMessages.forLogging(ErrorMessages.failedToLoadBook, e));
         _isLoading = false;
       });
     }
@@ -85,7 +88,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _error ?? 'Book not found',
+                _error ?? ErrorMessages.bookNotFound,
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),

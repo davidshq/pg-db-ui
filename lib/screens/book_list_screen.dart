@@ -8,6 +8,7 @@ import '../database/database_service.dart';
 import '../widgets/book_card.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/filter_chips.dart';
+import '../utils/error_messages.dart';
 import 'book_detail_screen.dart';
 import 'filter_screen.dart';
 
@@ -74,10 +75,8 @@ class _BookListScreenState extends State<BookListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Database Not Found'),
-        content: const Text(
-          'The pg.db database file was not found. Please ensure the database file exists in the expected location or select it manually.',
-        ),
+        title: const Text(ErrorMessages.databaseNotFoundTitle),
+        content: const Text(ErrorMessages.databaseNotFoundContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
