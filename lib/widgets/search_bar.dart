@@ -33,8 +33,21 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   @override
   void didUpdateWidget(SearchBarWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Only update the controller if the new initialValue is different from
+    // the current controller text. This prevents overwriting user input when
+    // the parent rebuilds after onChanged is called.
     if (widget.initialValue != oldWidget.initialValue) {
-      _controller.text = widget.initialValue ?? '';
+      final newValue = widget.initialValue ?? '';
+      if (_controller.text != newValue) {
+        final selection = _controller.selection;
+        _controller.text = newValue;
+        // Preserve cursor position if it was valid, otherwise place at end
+        if (selection.isValid && selection.end <= newValue.length) {
+          _controller.selection = selection;
+        } else {
+          _controller.selection = TextSelection.collapsed(offset: newValue.length);
+        }
+      }
     }
   }
 

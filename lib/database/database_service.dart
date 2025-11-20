@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/book.dart';
 import '../models/author.dart';
 import '../models/subject.dart';
@@ -18,7 +16,6 @@ class DatabaseService extends ChangeNotifier {
   String? _databasePath;
   bool _isInitialized = false;
   String? _error;
-  static bool _ffiInitialized = false;
 
   bool get isInitialized => _isInitialized;
   String? get error => _error;

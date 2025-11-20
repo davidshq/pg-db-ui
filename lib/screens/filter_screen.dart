@@ -154,23 +154,25 @@ class _FilterSection extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           constraints: const BoxConstraints(maxHeight: 200),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-
-              return RadioListTile<dynamic>(
-                title: Text(item.name),
-                value: item.id,
-                groupValue: selectedId,
-                onChanged: (value) {
-                  if (value != null) {
-                    onSelected(value);
-                  }
-                },
-              );
+          child: RadioGroup<dynamic>(
+            groupValue: selectedId,
+            onChanged: (value) {
+              if (value != null) {
+                onSelected(value);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+
+                return RadioListTile<dynamic>(
+                  title: Text(item.name),
+                  value: item.id,
+                );
+              },
+            ),
           ),
         ),
       ],
