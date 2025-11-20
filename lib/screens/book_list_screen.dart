@@ -37,9 +37,11 @@ class _BookListScreenState extends State<BookListScreen> {
     super.dispose();
   }
 
-  /// Initialize database and load data
+  /// Initialize database and load data.
+  /// By default, all books are displayed with no filters applied.
   Future<void> _initializeDatabase() async {
     final databaseService = context.read<DatabaseService>();
+    final bookProvider = context.read<BookProvider>();
     final searchProvider = context.read<SearchProvider>();
     final filterProvider = context.read<FilterProvider>();
 
@@ -52,13 +54,19 @@ class _BookListScreenState extends State<BookListScreen> {
       return;
     }
 
+    if (!mounted) return;
+
     // Set database service references
+    bookProvider.setDatabaseService(databaseService);
     searchProvider.setDatabaseService(databaseService);
     filterProvider.setDatabaseService(databaseService);
 
+    // Ensure no filters are active by default - show all books
+    filterProvider.clearFilters();
+
     // Load initial data
     if (mounted) {
-      await context.read<BookProvider>().initialize();
+      await bookProvider.initialize();
       if (!mounted) return;
       
       await filterProvider.loadFilterOptions();
@@ -107,7 +115,8 @@ class _BookListScreenState extends State<BookListScreen> {
     }
   }
 
-  /// Get current book list based on active mode
+  /// Get current book list based on active mode.
+  /// By default, returns all books from BookProvider when no search or filters are active.
   List<Book> _getCurrentBooks() {
     if (!mounted) return [];
     
@@ -120,6 +129,7 @@ class _BookListScreenState extends State<BookListScreen> {
     } else if (filterProvider.hasActiveFilters) {
       return filterProvider.filteredBooks;
     } else {
+      // Default: show all books
       return bookProvider.books;
     }
   }

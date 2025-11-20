@@ -34,8 +34,16 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<DatabaseService, BookProvider>(
           create: (_) => BookProvider(null),
-          update: (_, databaseService, previous) =>
-              BookProvider(databaseService),
+          update: (_, databaseService, previous) {
+            // Always preserve previous instance to avoid losing state during async operations
+            if (previous != null) {
+              // Update database service (internal check prevents unnecessary resets)
+              previous.setDatabaseService(databaseService);
+              return previous;
+            }
+            // Create new instance only if previous doesn't exist
+            return BookProvider(databaseService);
+          },
         ),
         ChangeNotifierProvider(
           create: (_) => SearchProvider(),

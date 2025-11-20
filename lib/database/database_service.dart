@@ -86,20 +86,29 @@ class DatabaseService extends ChangeNotifier {
     int offset = 0,
     String? sortBy,
   }) async {
-    if (_database == null) return [];
+    if (_database == null) {
+      debugPrint('DatabaseService: getBooks() called but _database is null');
+      return [];
+    }
 
     try {
+      debugPrint('DatabaseService: Executing getBooks query (limit: $limit, offset: $offset)');
       final List<Map<String, dynamic>> maps = await _database!.rawQuery(
         Queries.getBooks,
         [limit, offset],
       );
 
+      debugPrint('DatabaseService: Query returned ${maps.length} rows');
       final books = maps.map((map) => Book.fromMap(map)).toList();
+      debugPrint('DatabaseService: Mapped to ${books.length} Book objects');
       
       // Batch load all relations at once (optimized to avoid N+1 queries)
-      return await _loadBooksRelations(books);
-    } catch (e) {
-      debugPrint('Error getting books: $e');
+      final booksWithRelations = await _loadBooksRelations(books);
+      debugPrint('DatabaseService: Loaded relations, returning ${booksWithRelations.length} books');
+      return booksWithRelations;
+    } catch (e, stackTrace) {
+      debugPrint('DatabaseService: Error getting books: $e');
+      debugPrint('DatabaseService: Stack trace: $stackTrace');
       return [];
     }
   }

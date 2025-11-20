@@ -6,7 +6,7 @@ import '../utils/error_messages.dart';
 
 /// Provider for managing book data and state
 class BookProvider extends ChangeNotifier {
-  final DatabaseService? _databaseService;
+  DatabaseService? _databaseService;
   
   List<Book> _books = [];
   bool _isLoading = false;
@@ -17,6 +17,25 @@ class BookProvider extends ChangeNotifier {
   bool _disposed = false;
 
   BookProvider(this._databaseService);
+  
+  /// Set database service reference (allows updating after creation)
+  void setDatabaseService(DatabaseService databaseService) {
+    // Only reset if this is a new database service instance
+    final isNewService = _databaseService != databaseService;
+    _databaseService = databaseService;
+    
+    // Reset state when database service is set to ensure clean initialization
+    if (isNewService) {
+      _books = [];
+      _currentPage = 0;
+      _hasMore = true;
+      _error = null;
+      _isLoading = false;
+      _totalCount = 0;
+      debugPrint('BookProvider: Database service set, state reset');
+      _safeNotifyListeners();
+    }
+  }
   
   @override
   void dispose() {
@@ -41,28 +60,39 @@ class BookProvider extends ChangeNotifier {
 
   /// Initialize and load first page of books
   Future<void> initialize() async {
+    debugPrint('BookProvider: initialize() called');
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
+      debugPrint('BookProvider: Database not initialized (db: ${db != null}, initialized: ${db?.isInitialized})');
       _error = ErrorMessages.databaseNotInitialized;
       _safeNotifyListeners();
       return;
     }
 
-    await loadBooks();
+    debugPrint('BookProvider: Starting to load books...');
+    // Always refresh on initialization to ensure we start with a clean state
+    await loadBooks(refresh: true);
+    debugPrint('BookProvider: initialize() completed, books count: ${_books.length}');
   }
 
   /// Load books (first page or refresh)
   Future<void> loadBooks({bool refresh = false}) async {
+    debugPrint('BookProvider: loadBooks() called (refresh: $refresh, isLoading: $_isLoading)');
     final db = _databaseService;
     if (db == null || !db.isInitialized) {
+      debugPrint('BookProvider: Database not initialized in loadBooks (db: ${db != null}, initialized: ${db?.isInitialized})');
       _error = ErrorMessages.databaseNotInitialized;
       _safeNotifyListeners();
       return;
     }
 
     // Atomic check-and-set to prevent race conditions
-    if (_isLoading) return;
+    if (_isLoading) {
+      debugPrint('BookProvider: Already loading, skipping...');
+      return;
+    }
     _isLoading = true;
+    debugPrint('BookProvider: Starting database query...');
 
     try {
       _error = null;
@@ -81,7 +111,12 @@ class BookProvider extends ChangeNotifier {
       );
 
       // Check if disposed after async operation
-      if (_disposed) return;
+      if (_disposed) {
+        debugPrint('BookProvider: Provider was disposed during async operation, aborting...');
+        return;
+      }
+
+      debugPrint('BookProvider: Loaded ${newBooks.length} books (refresh: $refresh, page: $_currentPage)');
 
       if (refresh) {
         _books = newBooks;
@@ -95,20 +130,27 @@ class BookProvider extends ChangeNotifier {
       // Get total count if first load
       if (_currentPage == 1) {
         _totalCount = await db.countBooks();
+        debugPrint('BookProvider: Total books in database: $_totalCount');
         // Check again after async operation
         if (_disposed) return;
       }
 
+      debugPrint('BookProvider: Total books loaded: ${_books.length}');
       _safeNotifyListeners();
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Check if disposed before updating state
       if (_disposed) return;
       
       _error = ErrorMessages.failedToLoadBooks;
+      debugPrint('BookProvider: Error loading books: $e');
+      debugPrint('BookProvider: Stack trace: $stackTrace');
       debugPrint(ErrorMessages.forLogging(ErrorMessages.failedToLoadBooks, e));
       _safeNotifyListeners();
     } finally {
-      _isLoading = false;
+      if (!_disposed) {
+        _isLoading = false;
+        _safeNotifyListeners();
+      }
     }
   }
 
